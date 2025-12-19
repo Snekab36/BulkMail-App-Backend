@@ -1,71 +1,75 @@
-const express = require("express")
-const cors = require("cors")
+const express = require("express");
+const cors = require("cors");
 const nodemailer = require("nodemailer");
-const mongoose = require("mongoose")
-const app = express()
+const mongoose = require("mongoose");
 
-
-app.use(cors())
-app.use(express.json())
 require("dotenv").config();
 
-mongoose.connect(process.env.MONGO_URI)
-.then(() => console.log("Connected to MongoDB Atlas"))
-.catch(err => console.log(err));
+const app = express();
 
+app.use(cors({ origin: "*" }));
+app.use(express.json());
+
+// ✅ MongoDB Atlas connection
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("Connected to MongoDB Atlas"))
+  .catch(err => console.error("Mongo error:", err));
+
+// ✅ Schema
 const credentialSchema = new mongoose.Schema({
   user: String,
   pass: String
 });
 
-const credential = mongoose.model("credential", credentialSchema, "bulkmails");
+const Credential = mongoose.model("credential", credentialSchema, "bulkmails");
 
+// ✅ API route
+app.post("/sendemail", async (req, res) => {
+  const { msg, emailList } = req.body;
 
+  if (!msg || !emailList?.length) {
+    return res.status(400).send(false);
+  }
 
-app.post("/sendemail",function(req,res){
-    var msg = req.body.msg
-    var emailList = req.body.emailList
-     // Create a test account or replace with real credentials.
+  try {
+    const data = await Credential.find();
 
-     credential.find().then(function(data){
+    if (!data.length) {
+      console.error("No credentials found in DB");
+      return res.status(500).send(false);
+    }
 
-         const transporter = nodemailer.createTransport({
-               service:"gmail",
-               auth: {
-                user: data[0].toJSON().user,
-                pass: data[0].toJSON().pass,
-  },
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: data[0].user,
+        pass: data[0].pass,
+      },
+    });
+
+    for (const email of emailList) {
+      await transporter.sendMail({
+        from: data[0].user,
+        to: email,
+        subject: "A message from Bulk Mail App",
+        text: msg,
+      });
+    }
+
+    return res.send(true);
+
+  } catch (error) {
+    console.error("Email error:", error);
+    return res.status(500).send(false);
+  }
 });
-new Promise(async function(resolve, reject){
-try{
-      for(var i=0;i<emailList.length;i++)
-    {
-     await  transporter.sendMail(
-    {
-        from:"bsneka36@gmail.com",
-        to:emailList[i],
-        subject:"A message from Bulk Mail App",
-        text:msg
-    }
-      )
-      console.log("Email sent to:"+emailList[i])
-    }
-    resolve("Success...!")
-    }
- catch(error){
-    reject("Failed...")
- }
-    }).then(function(){
-        res.send(true)
-    }).catch(function(){
-        res.send(false)
-    })
- 
-}).catch(function(error){
-    console.log(error)
-})   
-})
 
-app.listen(5000,function(){
-    console.log("Server Started......")
-})
+// ✅ REQUIRED for Vercel
+module.exports = app;
+
+// ✅ Local development only
+if (process.env.NODE_ENV !== "production") {
+  app.listen(5000, () => {
+    console.log("Server running on port 5000");
+  });
+}
