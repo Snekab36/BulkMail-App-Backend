@@ -7,12 +7,19 @@ const app = express()
 
 app.use(cors())
 app.use(express.json())
+require("dotenv").config();
 
-mongoose.connect("mongodb://127.0.0.1:27017/passkeys").then(function(){
-    console.log("Connected to DB")
-}).catch(function(){console.log("Failed to connect")})
+mongoose.connect(process.env.MONGO_URI)
+.then(() => console.log("Connected to MongoDB Atlas"))
+.catch(err => console.log(err));
 
-const credential = mongoose.model("credential",{},"bulkmails")
+const credentialSchema = new mongoose.Schema({
+  user: String,
+  pass: String
+});
+
+const credential = mongoose.model("credential", credentialSchema, "bulkmails");
+
 
 
 app.post("/sendemail",function(req,res){
