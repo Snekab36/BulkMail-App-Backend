@@ -69,7 +69,7 @@ module.exports = app;
 
 // ✅ Local development only
 if (process.env.NODE_ENV !== "production") {
-  app.listen(8080, () => {
-    console.log("Server running on port 8080");
+  app.listen(5000, () => {
+    console.log("Server running on port 5000");
   });
 }
