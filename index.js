@@ -2,77 +2,36 @@ const express = require("express");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
 const mongoose = require("mongoose");
-
 require("dotenv").config();
 
 const app = express();
 
-// Middleware
-app.use(cors({ origin: "*" }));
+/* ---------- middleware ---------- */
+app.use(cors());
 app.use(express.json());
 
-// Test route (IMPORTANT)
+/* ---------- health check ---------- */
 app.get("/", (req, res) => {
-  res.send("BulkMail Backend is running");
+  res.status(200).send("BulkMail Backend is running");
 });
 
-// MongoDB connection
-mongoose.connect(process.env.MONGO_URI)
+/* ---------- mongodb ---------- */
+mongoose
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("Connected to MongoDB Atlas"))
-  .catch(err => console.error("Mongo error:", err));
+  .catch(err => {
+    console.error("Mongo error:", err);
+    process.exit(1);
+  });
 
-// Schema
-const credentialSchema = new mongoose.Schema({
-  user: String,
-  pass: String
-});
-
-const Credential = mongoose.model("credential", credentialSchema, "bulkmails");
-
-// API route
+/* ---------- routes ---------- */
 app.post("/api/sendemail", async (req, res) => {
-  const { msg, emailList } = req.body;
-
-  if (!msg || !emailList?.length) {
-    return res.status(400).send(false);
-  }
-
-  try {
-    const data = await Credential.find();
-
-    if (!data.length) {
-      return res.status(500).send(false);
-    }
-
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: data[0].user,
-        pass: data[0].pass
-      }
-    });
-
-    for (const email of emailList) {
-      await transporter.sendMail({
-        from: data[0].user,
-        to: email,
-        subject: "A message from Bulk Mail App",
-        text: msg
-      });
-    }
-
-    res.send(true);
-  } catch (error) {
-    console.error("Email error:", error);
-    res.status(500).send(false);
-  }
+  res.json({ ok: true });
 });
 
-const PORT = process.env.PORT || 5000;
+/* ---------- START SERVER ---------- */
+const PORT = Number(process.env.PORT); // Railway injects this
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-
-
