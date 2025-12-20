@@ -16,13 +16,15 @@ app.get("/", (req, res) => {
 });
 
 /* ---------- mongodb ---------- */
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("Connected to MongoDB Atlas"))
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("Connected to MongoDB Atlas");
+  })
   .catch(err => {
-    console.error("Mongo error:", err);
-    process.exit(1);
+    console.error("Mongo connection failed:", err.message);
+  
   });
+
 
 /* ---------- routes ---------- */
 app.post("/api/sendemail", async (req, res) => {
@@ -30,6 +32,7 @@ app.post("/api/sendemail", async (req, res) => {
 });
 
 /* ---------- START SERVER ---------- */
+console.log("PORT value from Railway:", process.env.PORT);
 const PORT = Number(process.env.PORT); // Railway injects this
 
 app.listen(PORT, "0.0.0.0", () => {
