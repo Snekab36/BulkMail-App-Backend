@@ -1,18 +1,12 @@
 {
-  "name": "bulkmail-backend",
+  "name": "bulk-mail-backend",
   "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js"
-  },
-  "engines": {
-    "node": "18.x"
-  },
+  "main": "api/index.js",
   "dependencies": {
-    "express": "^4.19.2",
     "cors": "^2.8.5",
-    "mongoose": "^8.1.0",
-    "nodemailer": "^6.9.8",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "mongoose": "^7.6.0",
+    "nodemailer": "^6.9.7"
   }
 }
